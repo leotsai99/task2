@@ -1,0 +1,103 @@
+// push from local dev1 branch to origin develop
+// Push the current branch to the remote ref matching "develop" in the origin repository.
+git push origin HEAD:develop
+
+// try try?
+git push origin dev1:develop
+
+// merge remote r0.1 to remote master
+// http://nvie.com/posts/a-successful-git-branching-model/
+git fetch origin
+git checkout -b r0.1 origin/r0.1
+git checkout master
+git merge --no-ff r0.1
+git push origin master
+
+// if file conflict
+git mergetool
+
+
+// kill gerrit2 all process
+sudo killall -KILL -u gerrit2
+
+//圖形介面來呈現git log, git status 整合性的內容
+
+sudo apt-get install gitg
+進入某個appp project 後
+leo@leo-x50:~/git/xxxBuddyManager$ gitg
+
+git log
+git reset --hard 84fa22  (強制back回去到某個id)
+git reset --soft c6df76e (回去到某個id, 但保留修改的部份)
+git branch
+git branch –r
+git pull origin app/apps/xxxBuddyManager/1.00/api19/xxxBuddyManager
+git checkout -b test
+git branch -d test
+git status
+
+git gc --prune=now
+
+// to delete the ref. branch
+git update-ref -d refs/published/test2
+
+// to delete any ref, you can always push nothing to it in the local repository:
+git push . :refs/published/test2
+
+// after git add .  , rollback to original status
+git reset
+
+// to ignore add .
+gedit .gitignore
+
+bin/
+gen/
+.classpath
+.project
+project.properties
+
+// remove file from tracked status to untracked
+git status | grep "new file" | awk '{print $3}'
+git rm `git status | grep "new file" | awk '{print $3}'`
+git rm --cache testfile  (remvoe from index, once doing that, git never monitor the file)
+
+git format-patch -1 (產生0001-test.patch)
+git am 0001-Fix1.patch (切到另一個branch)
+
+// 若有錯誤，進行下一步, create a report, refer to a report to modify the problem file!
+// 修改完後，再commit
+git apply 0001-Fix1.patch --reject  (產生conflict report)
+
+[套上下面的參數，讓git從20cm變成10cm的指令]
+git clone ssh://leo_tsai@tpe.app.git.xxx.com:29419/app/packages/apps/xxxBuddyManager
+>>> git clone gitapp:/app/packages/apps/xxxBuddyManager
+
+vim ~/.ssh/config
+
+Host gerrit
+    HostName git.xxx.com
+    Port 29419
+    User leo_tsai
+
+
+Host gitapp
+    HostName tpe.app.xxx.xxx.com
+    Port 29419
+    User leo_tsai
+
+
+[套上下面的參數，讓git從黑白變成彩色的]
+example: git lol
+example: git lola
+
+vim ~/.gitconfig
+
+[alias]
+        lol = log --graph --decorate --pretty=oneline --abbrev-commit
+        lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+
+[color]
+        branch = auto
+        diff = auto
+        interactive = auto
+        status = auto
