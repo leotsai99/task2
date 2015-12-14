@@ -1,0 +1,61 @@
+plugin -u https://github.com/NLPchina/elasticsearch-sql/releases/download/1.4/elasticsearch-sql-1.4.zip --install sql
+====================================================================================
+
+
+
+====================================================================================
+SELECT * FROM bank
+WHERE state = "AK"
+ORDER BY age DESC LIMIT 500 
+
+SELECT count(*), avg(age) FROM bank
+
+POST /bank/_search
+{
+  "query": {
+    "match": {
+      "state": "AK"
+    }
+  },
+  "sort": [
+    {
+      "age": {
+        "order": "asc",
+        "mode": "avg"
+      }
+    }
+  ]
+}
+
+====================================================================================
+SELECT /*! USE_NL */ c.title, h.user_id2, h.rating FROM posts/post c
+JOIN posts/rating h
+ON h.user_id2 = c.user_id
+
+====================================================================================
+
+SELECT firstname, lastname FROM bank
+WHERE age > 30 AND age < 40
+====================================================================================
+
+SELECT /*! USE_NL */ * FROM neo_cms_v3/app c
+JOIN neo_cms_v3/category h
+ON h.user_id2 = c.id
+
+
+
+
+neo_cms_v3
+
+
+
+
+
+
+
+
+
+
+
+
+
