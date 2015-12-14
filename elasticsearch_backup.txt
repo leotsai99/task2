@@ -1,0 +1,27 @@
+
+csv2es --index-name neo_cms_sample --doc-type app --import-file op.csv --host http://127.0.0.1:9200/ --delimiter ','
+
+https://github.com/taskrabbit/elasticsearch-dump
+
+elasticdump \
+  --input=http://bbb-dev1.dev.usw2.cs-xxx.co:9200/neo_cms_sample \
+  --output=http://127.0.0.1:9200/neo_cms_sample \
+  --type=mapping
+
+elasticdump \
+  --input=http://bbb-dev1.dev.usw2.cs-xxx.co:9200/neo_cms_sample \
+  --output=http://127.0.0.1:9200/neo_cms_sample \
+  --type=data
+
+
+elasticdump \
+  --input=http://bbb-dev1.dev.usw2.cs-xxx.co:9200 \
+  --input-index=neo_cms_sample \
+  --output=http://127.0.0.1:9200 \
+  --output-index=neo_cms_sample \
+  --type=data
+
+
+stream2es es \
+     --source http://bbb-dev1.dev.usw2.cs-xxx.co:9200/neo_cms_sample \
+     --target http://127.0.0.1:9200/neo_cms_sample
