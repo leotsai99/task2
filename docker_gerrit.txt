@@ -1,0 +1,40 @@
+//modify /.git/config
+leo@leo-x50:~/tmp2/AAA/.git$ cat config
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = http://localhost:8888/AAA
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
+//========================================================
+
+git clone http://localhost:32773/AAA
+
+git push ssh://dev@localhost:9999/AAA HEAD:refs/for/AAA2
+git pull origin AAA2  (git pull ssh://dev@localhost:9999/AAA)
+git pull http://localhost:8888/AAA
+
+
+// 可以bash進入
+docker run -t -i → can be detached with ^P^Q and reattached with docker attach
+docker run -i → cannot be detached with ^P^Q; will disrupt stdin
+docker run → cannot be detached with ^P^Q; can SIGKILL client; can reattach with docker attach
+
+(-P 隨機port)
+docker run -P -d larrycai/gerrit:review
+
+(-p 指定port)
+docker run -t -i -p 8888:8080 -p 9999:29418 -d larrycai/gerrit:review
+
+// 進入某container的bash
+docker exec -ti f76f9f13ef72 bash
+
+// attach 現行的container bash, 但可能因命令阻塞 , 用^P^Q exit
+docker attach f76f9f13ef72
+
+// 如果attach 進去了，但出不來，用另一個docker kill xxx, 來中止
