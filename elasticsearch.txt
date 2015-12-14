@@ -1,0 +1,993 @@
+
+
+http://mednoter.com/all-about-analyzer-part-one.html
+
+
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "terms": {
+          "offer_id": ["6b0da50a-ce4c-49dd-abef-2728aeb32c42"]
+        }
+      }
+    }
+  }
+}
+
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "query": {
+          "bool": {
+            "should": [
+              {
+                "match_phrase": {
+                  "offer_id": "6b0da50a-ce4c-49dd-abef-2728aeb32c42"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+
+// import cvs to elasticsearch
+csv2es --index-name neo_cms_sample --doc-type app --import-file op.csv --host http://127.0.0.1:9200/ --delimiter ','
+
+
+// understand queries
+GET /_validate/query?explain
+{
+   "query": {
+      "match" : {
+         "tweet" : "really powerful"
+      }
+   }
+}
+
+// show mapping
+GET /neo_cms_sample/app/_mapping
+
+// To find out why it is invalid, add the explain parameter to the query string:
+GET /my_index/my_type/_validate/query?explain
+
+
+// Term Query = Term Filter, Terms Query = Terms Filter
+// Filters documents that have fields that contain a term (not analyzed). Similar to term query, except that it acts as a filter
+{
+  "query": {
+    "terms": {
+      "tags": [
+        "blue",
+        "pill"
+      ]
+    }
+  }
+}
+
+
+{
+  "query": {
+    "filtered": { // *** Filtered query
+      "query": { // If a query is not specified, it defaults to the match_all query
+        "match_all": {}
+      },
+      "filter": {
+        "terms": {
+          "user": ["kimchy", "elasticsearch"]
+        }
+      }
+    }
+  }
+}
+
+// The "filtered query" is used to combine another "Query" with any "Filter"
+{
+  "query" : {
+	  "filtered": { *** Filtered query
+	    "query": { "match": { "tweet": "full text search" }}, // a Query
+	    "filter": {
+	      "bool": { // bool filter
+      		"must": { "range": { "created": { "gte": "now-1d/d" }}}, // range filter
+      		"should": [
+      		  { "term": { "featured": true }}, // term filter
+      		  { "term": { "starred":  true }}  // term filter
+      		],
+      		"must_not": { "term": { "deleted": false }} // term filter
+	      }
+	    }
+	  }
+  }
+}
+
+
+// Query Filter - Wraps any query to be used as a filter
+{
+  "query": {
+    "filtered": { *** Filtered query
+      "query": { // If a query is not specified, it defaults to the match_all query
+        "match_all": {}
+      },
+      "filter": {
+        "query": { //  *** Query Filter
+          "bool": { // Bool Query
+            "should": [
+              {
+                "match_phrase": {"product_ids": "VR-0dca956f-d270-42ab-9605-9ea19712856e"} // Match Query
+              },
+              {
+                "match_phrase": {"product_ids": "VR-2fcf0afc-1a21-405d-aee8-4b201d85f83c"} // Match Query
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+// match query sample:
+{
+  "query": {
+    "bool": { // Bool Query
+      "should": [
+        {
+          "match_phrase": {"product_ids": "VR-0dca956f-d270-42ab-9605-9ea19712856e"} // Match Query
+        },
+        {
+          "match_phrase": {"product_ids": "VR-2fcf0afc-1a21-405d-aee8-4b201d85f83c"} // Match Query
+        }
+      ]
+    }
+  }
+}
+
+{
+  "query": {
+    "bool" : { // Bool Query
+        "must" : {
+            "term" : { "user" : "kimchy" } // Term Query
+        },
+        "must_not" : {
+            "range" : { // Range Query
+                "age" : { "from" : 10, "to" : 20 }
+            }
+        },
+        "should" : [
+            {"term" : { "tag" : "wow" }, // Term query
+            {"term" : { "tag" : "elasticsearch" }} // Term query
+        ],
+        "minimum_should_match" : 1,
+        "boost" : 1.0
+    }
+  }
+}
+
+# match search 是用在全文檢索，下面就無法找出有任何符合的
+{
+  "query": {
+    "match": {
+      "_id": {
+        "query": [
+	  "dd652c43-afee-4878-9d20-903a54fc3ed2",
+	  "09d487e0-eed9-465b-ab22-a882f743c4d9"
+        ],
+        "type": "phase"
+      }
+    }
+  }
+}
+
+# 用ids來search _ids, 可以找出全部符合的
+{
+  "query": {
+    "ids": {
+      "values": [
+        "dd652c43-afee-4878-9d20-903a54fc3ed2",
+        "09d487e0-eed9-465b-ab22-a882f743c4d9"
+      ]
+    }
+  }
+}
+
+#用filter, 配合 term可找出所以符合的
+{
+  "query": {
+    "filtered": { *** Filtered query
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "terms": { // Terms filter
+          "cid": [
+            "09d487e0-eed9-465b-ab22-a882f743c4d9",
+            "dd652c43-afee-4878-9d20-903a54fc3ed2"
+          ]
+        }
+      }
+    }
+  }
+}
+
+#用filter, 配合match 也可找出所以符合的
+{
+  "query": {
+    "filtered": { *** Filtered Query
+      "query": { // Match All Query
+        "match_all": {}
+      },
+      "filter": {
+        "query": { // Query Filter
+          "match": { // Match Query
+            "cid": {
+              "query": [
+                "09d487e0-eed9-465b-ab22-a882f743c4d9",
+                "09d487e0-eed9-465b-ab22-a882f743c4d9",
+                "dd652c43-afee-4878-9d20-903a54fc3ed2",
+                "09d487e0-eed9-465b-ab22-a882f743c4d9",
+                "dd652c43-afee-4878-9d20-903a54fc3ed2"
+              ],
+              "type": "phrase"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# field必需存在
+{
+    "query" : {
+        "filtered" : {
+            "filter" : {
+                "exists" : { "field" : ["id", "title"] }
+            }
+        }
+    }
+}
+
+# field必需存在
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match_all": {}
+      },
+      "filter": {
+        "and": { // And filter
+          "filters": [
+            {
+              "exists": { // Exists Filter
+                "field": "id"
+              }
+            },
+            {
+              "exists": { // Exists Filter
+                "field": "room_size"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# field必需存在
+{
+  "query": {
+    "filtered": {
+      "filter": [
+        {
+          "exists": {
+            "field": "id"
+          }
+        },
+        {
+          "exists": {
+            "field": "title"
+          }
+        }
+      ]
+    }
+  }
+}
+
+# field必需存在
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "exists": {
+                "field": "id"
+              }
+            },
+            {
+              "exists": {
+                "field": "title"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+
+#join 方法
+PS: copy http://search.maven.org/remotecontent?filepath=com/google/guava/guava/18.0/guava-18.0.jar to elasticsearch/elasticsearch-1.7.2/lib
+https://github.com/NLPchina/elasticsearch-sql/wiki
+https://github.com/NLPchina/elasticsearch-sql
+
+
+SELECT /*! USE_NL */ c.title, h.user_id2, h.rating FROM posts/post c
+JOIN posts/rating h
+ON h.user_id2 = c.user_id
+
+
+curl -XGET http://localhost:9200/_cluster/health?pretty=true
+
+http://stackoverflow.com/questions/15694724/shards-and-replicas-in-elasticsearch
+
+# yellow >>>> an unassigned replica
+curl -XPUT http://localhost:9200/_settings -d '{ "number_of_replicas" :0 }'
+
+curl -XPUT http://localhost:9200/_cluster/settings -d '
+{
+    "transient" : {
+        "cluster.routing.allocation.enable": true
+    }
+}'
+
+curl -XPUT 'localhost:9200/_cluster/settings' -d '{
+    "transient" : {
+        "cluster.routing.allocation.enable" : "all"
+    }
+}'
+
+# curl -X<REST Verb> <Node>:<Port>/<Index>/<Type>/<ID>
+
+http://www.spacevatican.org/2012/6/3/fun-with-elasticsearch-s-children-and-nested-documents/
+
+# insert data from local json
+curl -XPOST 'localhost:9200/bank/account/_bulk?pretty' --data-binary @accounts.json
+
+# curl -X<REST Verb> <Node>:<Port>/<Index>/<Type>/<ID>
+# create index
+PUT customer
+
+# delete index
+DELETE customer
+
+# 索引并查询一个文档
+PUT /customer/external/1
+{
+  "name": "John Doe",
+  "age": 20
+}
+
+# 修改doc
+PUT /customer/external/1
+{
+  "name": "Leo Tsai2"
+}
+
+# 没有指定一个ID，我们使用的是POST而
+POST customer/external
+{
+  "name": "?????!!!!!"
+}
+
+# 修改doc
+POST /customer/external/1/_update
+{
+  "doc": { "name": "Jane Doe" }
+}
+http://localhost:9200/_plugin/marvel/sense/index.html#
+# 修改doc
+POST /customer/external/1/_update
+{
+  "doc": { "name": "Jane Doe", "age": 22 }
+}
+
+# get types
+GET /customer
+
+# search 
+GET /customer/external/1
+
+# search all
+GET /customer/external/_search
+{
+    "query" : {
+        "match_all" : {}
+    }
+}
+
+# 批处理
+GET /customer/external/_bulk
+{"index":{"_id":"1"}}
+{"name": "John Doe" }
+{"index":{"_id":"2"}}
+{"name": "Jane Doe" }
+
+# 批处理
+POST /customer/external/_bulk?
+{"update":{"_id":"1"}}
+{"doc": { "name": "John Doe becomes Jane Doe" } }
+{"delete":{"_id":"2"}}
+
+# search（默认是前10个文档）
+GET /bank/_search?q=*&pretty
+
+# search（默认是前10个文档, 没有指定size的值，那么它默认就是10
+POST /bank/_search
+{
+  "query": { "match_all": {} }
+}
+
+POST /bank/_search
+{
+  "query": { "match_all": {} },
+  "size": 1
+}
+
+POST /bank/_search
+{
+  "query": { "match_all": {} },
+  "_source": ["account_number", "balance"]
+}
+
+POST /bank/_search
+{
+  "query": { "match": { "account_number": 20 } }
+}
+
+POST /bank/_search
+{
+  "query": { "match_phrase": { "address": "mill lane" } }
+}
+
+POST /bank/_search
+{
+  "query": {
+    "term": {
+        "age": "40"
+    }
+  }
+}
+
+
+# 返回包含“mill” 和“lane” 的所有的账户
+POST /bank/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+
+# 包含“mill” 或者“lane”的所有的账户
+POST /bank/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+
+POST /bank/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "age": "40" } }
+      ],
+      "must_not": [
+        { "match": { "state": "ID" } }
+      ]
+    }
+  }
+}
+
+POST /bank/_search
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                  "range": {
+                      "account.age": {
+                          "from": "30",
+                          "to": "40"
+                      }
+                  }
+                }
+            ],
+            "must_not": [ ],
+            "should": [ ]
+        }
+    },
+    "from": 0,
+    "size": 50,
+    "sort": [ ],
+    "facets": { }
+}
+
+# 注意我们将size设置成 0，这样我们就可以只看到聚合结果了，而不会显示命中的结果, 按照state分组，并按照州名的计数倒序排序
+POST /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state"
+      }
+    }
+  }
+}
+
+# 在先前聚合的基础上，现在这个例子计算了每个州的账户的平均存款
+POST /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state"
+      },
+      "aggs": {
+        "平均" : {
+          "avg": {
+            "field": "balance"
+          }
+        }
+      }
+    }
+  }
+}
+
+# 现在让我们按照平均余额进行排序
+POST /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state",
+        "order": {
+          "平均": "desc"
+        }
+      },
+      "aggs": {
+        "平均": {
+          "avg": {
+            "field": "balance"
+          }
+        }
+      }
+    }
+  }
+}
+
+# 使用年龄段（20-29，30-39，40-49）分组，然后再用性别分组，最后为每一个年龄段的每组性别计算平均账户余额。
+POST /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_age": {
+      "range": {
+        "field": "age",
+        "ranges": [
+          {
+            "from": 20,
+            "to": 30
+          },
+          {
+            "from": 30,
+            "to": 40
+          },
+          {
+            "from": 40,
+            "to": 50
+          }
+        ]
+      },
+      "aggs": {
+        "group_by_gender": {
+          "terms": {
+            "field": "gender"
+          },
+          "aggs": {
+            "average_balance": {
+              "avg": {
+                "field": "balance"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+GET /product
+
+# join 2 type
+GET /product/_search?pretty
+{
+    "query": {
+        "match" : {
+            "product_id" : "1111"
+        }
+    }
+}
+
+# join 2 type
+GET /product/_search?pretty
+{
+    "query": {
+        "query_string" : {
+            "query" : "product_id:1111"
+        }
+    }
+}
+
+
+GET /authors/author/_search
+{
+  "query": {
+    "filtered": {
+       "query": {"match_all": {}},
+       "filter": {
+          "and": [
+            {"term": {"books.publisher": "penguin"}},
+            {"term": {"books.genre": "scifi"}}
+          ]
+       }
+    }
+  }
+}
+
+
+# Nested Documents
+POST /authors/nested_author/_mapping
+{
+  "nested_author":{
+    "properties":{
+      "books": {
+        "type": "nested"
+      }
+    }
+  }
+}
+
+PUT /authors/nested_author/1
+{
+  "name": "Leo Tsai",
+  "books": [
+    {
+      "name": "Guns and lasers",
+      "genre": "scifi",
+      "publisher": "orbit"
+    },
+    {
+      "name": "Dead in the night",
+      "genre": "thriller",
+      "publisher": "penguin"
+    }
+  ]
+}
+
+PUT /authors/nested_author/2
+{
+  "name": "Wen Shu",
+  "books": [
+    {
+      "name": "Revelation Space",
+      "genre": "scifi",
+      "publisher": "penguin"
+    }
+  ]
+}
+
+GET /authors/nested_author/_search
+GET /authors/nested_author/_search
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "nested": {
+          "path": "books",
+          "query":{
+            "filtered": {
+              "query": { "match_all": {}},
+              "filter": {
+                "and": [
+                  {"term": {"books.publisher": "penguin"}},
+                  {"term": {"books.genre": "scifi"}}
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Parent & child
+PUT /authors/bare_author/1 
+{
+  "name": "Leo Tsai"
+}
+PUT /authors/bare_author/2
+{
+  "name": "Wen Shu"
+}
+POST /authors/book/_mapping
+{
+  "book":{
+    "_parent": {"type": "bare_author"}
+  }
+}
+POST /authors/book/1?parent=2
+{
+   "name": "Revelation Space",
+   "genre": "scifi",
+   "publisher": "penguin"
+}
+POST /authors/book/2?parent=1
+{
+   "name": "Guns and lasers",
+   "genre": "scifi",
+   "publisher": "orbit"
+}
+
+POST /authors/bare_author/_search
+{
+  "query": {
+    "has_child": {
+      "type": "book",
+      "query" : {
+        "filtered": {
+          "query": { "match_all": {}},
+          "filter" : {
+            "and": [
+              {"term": {"publisher": "penguin"}},
+              {"term": {"genre": "scifi"}}
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+
+POST /posts
+POST /posts/rating/_mapping
+{
+  "rating":{
+    "_parent": {"type": "post"}
+  }
+}
+PUT /posts/post/1
+{ "title": "好有趣的柱子" }
+PUT /posts/post/2
+{ "title": "好熱的車子" }
+PUT /posts/post/3
+{ "title": "有好看的喔" }
+
+PUT /posts/rating/1?parent=1
+{ "user_id": 1234, "rating": 4}
+PUT /posts/rating/2?parent=2
+{ "user_id": 1234, "rating": 2}
+PUT /posts/rating/3?parent=2
+{ "user_id": 4234, "rating": 5}
+PUT /posts/rating/4?parent=3
+{ "user_id": 1234, "rating": 5}
+
+
+POST /posts/post/_search
+{
+  "query": {
+    "filtered": {
+      "query": {
+        "match": {"title": "有趣"}
+      },
+      "filter":{
+        "has_child": {
+          "type": "rating",
+          "query" : {
+            "filtered": {
+              "query": { "match_all": {}},
+              "filter" : {
+                "and": [
+                  {"term": {"user_id": 1234}},
+                  {"range": {"rating": {"gt" : 3}}}
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+POST /posts/rating/_search?pretty=true
+{
+  "query": {
+    "filtered": {
+      "query": {"match_all": {}},
+      "filter": {
+        "and": [
+          {"term": {"user_id": 1234}},
+          {
+            "has_parent": {
+              "type": "post",
+              "query": {
+                "match": {"title": "有趣"}
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "sort": [
+    { "rating" : {"order" : "asc"} }
+  ]
+}
+
+PUT my_index
+{
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "full_text": {
+          "type":  "string" 
+        },
+        "exact_value": {
+          "type":  "string",
+          "index": "not_analyzed" 
+        }
+      }
+    }
+  }
+}
+
+PUT my_index/my_type/1
+{
+  "full_text":   "Quick Foxes!", 
+  "exact_value": "Quick Foxes!",
+  "other" : "oh ya!"
+}
+
+PUT my_index/my_type/2
+{
+  "full_text":   "Quick Foxes2!", 
+  "exact_value": "Quick Foxes2!",
+  "other" : "oh ya2!"
+}
+
+GET my_index/my_type/_search
+{
+  "query": {
+    "term": {
+      "exact_value": "Quick Foxes!" 
+    }
+  }
+}
+
+GET my_index/my_type/_search
+{
+  "query": {
+    "term": {
+      "full_text": "Quick Foxes!" 
+    }
+  }
+}
+
+GET my_index/my_type/_search
+{
+  "query": {
+    "term": {
+      "exact_value": "foxes" 
+    }
+  }
+}
+
+GET my_index/my_type/_search
+{
+  "query": {
+    "match": {
+      "full_text": "foxes quick gg" 
+    }
+  }
+}
+
+GET my_index/my_type/_search
+{
+  "query": {
+    "match_phrase": {
+      "full_text": "foxes quick" 
+    }
+  }
+}
+
+GET my_index/my_type/_search
+{
+  "query": {    
+    "query_string" : {
+        "query" : "foxes OR ya2"
+    }}
+
+}
+
+
+GET my_index/my_type/_search
+{
+  "query": {    
+    "match" : {
+        "full_text" : {
+            "query" : " quick foxes",
+            "type" : "phrase"
+        }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
