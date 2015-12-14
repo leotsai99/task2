@@ -1,0 +1,68 @@
+ab -k -c 1000 -n 1000 http://10.116.65.94:8888/api/cms/v1/apps/portal
+
+
+http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/sns/model/SubscribeRequest.html
+http://docs.aws.amazon.com/zh_cn/cli/latest/userguide/cli-sqs-queue-sns-topic.html
+
+
+aws sns create-topic --name leotestTopic
+
+{
+    "TopicArn": "arn:aws:sns:us-east-1:218139400964:leotestTopic"
+}
+
+
+aws sns subscribe --topic-arn arn:aws:sns:us-east-1:218139400964:leotestTopic --protocol email --notification-endpoint leo_tsai@htc.com
+
+
+aws sns publish --topic-arn arn:aws:sns:us-east-1:218139400964:leotestTopic --message "Hello World2!"
+
+
+
+// SQS
+http://docs.aws.amazon.com/cli/latest/reference/sqs/create-queue.html
+http://docs.aws.amazon.com/cli/latest/reference/sqs/send-message.html
+http://docs.aws.amazon.com/cli/latest/reference/sqs/receive-message.html
+http://docs.aws.amazon.com/cli/latest/reference/sqs/delete-queue.html
+http://docs.aws.amazon.com/cli/latest/reference/sqs/delete-message.html
+
+// Using Amazon SQS Dead Letter Queues
+aws sqs create-queue --queue-name MyQueue --attributes file://create-queue.json
+aws sqs create-queue --queue-name MyQueue
+{
+    "QueueUrl": "https://queue.amazonaws.com/218139400964/MyQueue"
+}
+
+aws sqs send-message --queue-url https://queue.amazonaws.com/218139400964/MyQueue --message-body "VR app upload finished." --message-attributes file://send-message.json
+
+aws sqs receive-message --queue-url https://queue.amazonaws.com/218139400964/MyQueue --attribute-names All --message-attribute-names All --max-number-of-messages 10
+
+aws sqs delete-message --queue-url https://queue.amazonaws.com/218139400964/MyQueue --receipt-handle AQEB+c5zLAXQOp0JaQ9Te+HvkQZAyDJxzLO9P8jybwThcuVfgYFSjxUUq9/4Rp0ZA6wmKtdTeBBQgSHdK/Njcrmr4cLnwsf8F0TLTbMOru8YYwWPokq8cMFggb+DL+Jzf6FBZph9UhQ/E4pNQuPtZyG+MHoIXrQ7ZPs3tQCGlysBooiq4sPx9xiewyIjwGpjrJqysVgFCiSqtX9ZXLS6pStaq3eT0KCOeMyNrvDVWMIm/AUWSocrYq6NsDWfAkHf9Z0Bn7cMfQ1TYWk3hceReU893APS8WTeTmgbIvFqM1/1KeSwk1grUpm30mWhYnggbfQlg5qxmxoQy6V8wAp0fC5xLg==
+
+aws sqs delete-queue --queue-url https://queue.amazonaws.com/218139400964/MyQueue
+
+aws sqs get-queue-attributes --queue-url https://queue.amazonaws.com/218139400964/MyQueue --attribute-names All
+
+
+http://blog.timmattison.com/archives/2014/09/02/using-amazon-sts-credentials-inside-of-a-properties-file/
+
+// 暫時的url 上傳
+http://docs.aws.amazon.com/zh_cn/AmazonS3/latest/dev/PresignedUrlUploadObjectDotNetSDK.html
+
+// 暫時的token
+http://docs.aws.amazon.com/zh_cn/IAM/latest/UserGuide/id_credentials_temp_use-resources.html
+http://docs.aws.amazon.com/zh_cn/AmazonS3/latest/dev/AuthUsingTempFederationTokenJava.html
+http://docs.aws.amazon.com/AmazonS3/latest/dev/AuthUsingTempSessionTokenJava.html
+http://docs.aws.amazon.com/zh_cn/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html
+
+// API get token
+http://docs.aws.amazon.com/zh_cn/AWSSdkDocsJava/latest/DeveloperGuide/prog-services-sts.html
+
+// S3 policy
+http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-access-control.html
+
+
+
+
+
+
